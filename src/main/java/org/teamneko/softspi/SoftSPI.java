@@ -12,10 +12,30 @@ import java.io.OutputStream;
  * @author Tommy « LeChat » Savaria
  */
 public class SoftSPI {
+	/**
+	 * Clock Select pin number (wiringPi numbering scheme)
+	 */
 	public final int cs;
+	
+	/**
+	 * Master In Slave Out pin number (wiringPi numbering scheme)
+	 */
 	public final int miso;
+	
+	/**
+	 * Master Out Slave In pin number (wiringPi numbering scheme)
+	 */
 	public final int mosi;
+	
+	/**
+	 * SPI Clock pin number (wiringPi numbering scheme)
+	 */
 	public final int clk;
+	
+	/**
+	 * Bus speed in bits per second
+	 */
+	public final long speed;
 	
 	static {
 		boolean loaded = false;
@@ -39,30 +59,16 @@ public class SoftSPI {
 	 * @param miso Master In Slave Out Pin
 	 * @param mosi Master Out Slave In Pin
 	 * @param clk Clock Pin
+	 * @param speed Speed of the SPI port in bits per second (b/s)
 	 */
-	public SoftSPI(int cs, int miso, int mosi, int clk) {
+	public SoftSPI(int cs, int miso, int mosi, int clk, long speed) {
 		this.cs = cs;
 		this.miso = miso;
 		this.mosi = mosi;
 		this.clk = clk;
-	}
-	
-	/**
-	 * Read a register from the SPI device
-	 * @param address Register address to read
-	 * @return Value in the register
-	 */
-	public byte read(byte address) {
-		return readRegister(this, (byte)((address << 1) | 0x80));
-	}
-	
-	/**
-	 * Write to a register on the SPI device
-	 * @param address Register address to write
-	 * @param value Value to write to the register
-	 */
-	public void write(byte address, byte value) {
-		writeRegister(this, (byte)((address << 1) & 0x7F), value);
+		this.speed = speed;
+		
+		initialize(this);
 	}
 	
 	/**
@@ -134,19 +140,17 @@ public class SoftSPI {
         System.load(temp.getAbsolutePath());
     }
     
-	/**
-	 * Read a register from the SPI Device
-	 * @param spi SPI Pins Definition
-	 * @param reg Address of the register to read
-	 * @return Value read from the register
-	 */
-	private static native byte readRegister(SoftSPI spi, byte reg);
-	
-	/**
-	 * Write a register on the SPI Device
-	 * @param spi SPI Pins Definition
-	 * @param reg Address of the register to write
-	 * @param value Value to write into the register
-	 */
-	private static native void writeRegister(SoftSPI spi, byte reg, byte value);
+    /**
+     * Initializes WiringPi and the GPIO for the SPI Device
+     * @param spi SPI Pins Definition
+     */
+    public static native void initialize(SoftSPI spi);
+    
+    /**
+     * Initiate a read/write communication on the SPI port
+     * @param spi SPI Pins Definition
+     * @param data Data to write on the SPI port
+     * @return Data read from the SPI port
+     */
+	public static native byte[] readWrite(SoftSPI spi, byte[] data);
 }
